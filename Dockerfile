@@ -20,7 +20,7 @@ RUN npm run build
 FROM node:22-slim
 
 # Add curl 
-RUN apk add --no-cache curl
+RUN apt-get update && apt-get install -y curl
 
 # Create a non-root user nodeappuser & group
 RUN addgroup --system nodeappgroup 
