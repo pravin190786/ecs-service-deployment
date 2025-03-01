@@ -1,0 +1,52 @@
+name: Deploy on Dev env
+
+on: 
+  push: 
+    branches:
+      - dev # Runs only on 'dev' branch push
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-push:
+    name: Build & Push to AWS ECR
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/dev' && 'dev' || github.ref == 'refs/heads/qa' && 'qa' || 'prod' }}  # 🔥 Dynamic environment selection
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Debug Selected Environment
+        run: |
+          echo "Selected environment: ${{ github.ref == 'refs/heads/dev' && 'dev' || github.ref == 'refs/heads/qa' && 'qa' || 'prod' }}"
+
+      - name: Configure AWS Credntails
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin 667269959204.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+      - name: Build Docker Image
+        run: |
+          IMAGE_TAG=v-$(git rev-parse --short HEAD)
+          IMAGE_URI=667269959204.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/node-app
+
+          # Build with commit ID tag 
+          # [For ARM use --platform linux/arm64 ]
+          # Note: ARM64 need to change the build machine & base image of docker
+          docker build  -t $IMAGE_URI:$IMAGE_TAG -t $IMAGE_URI:latest .
+
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Push Docker Image to ECR
+        run: |
+          docker push $IMAGE_URI:$IMAGE_TAG
+          docker push $IMAGE_URI:latest
