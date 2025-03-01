@@ -1,7 +1,6 @@
 import express, { Request, Response } from "express";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Health check endpoint
 app.get("/health", (req: Request, res: Response) => {
@@ -17,13 +16,9 @@ app.get("/getInfo", (req: Request, res: Response) => {
     });
 });
 
-// Health check endpoint
-app.get("/", (req: Request, res: Response) => {
-    res.json({ status: `Server is running on http://localhost:${PORT}`});
-});
-
 
 // Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+const PORT: number = Number(process.env.PORT) || 3000;
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on port ${PORT}`);
 });
