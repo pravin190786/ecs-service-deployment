@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-        
+
       - name: Debug Selected Environment
         run: |
           echo "Selected environment: ${{ github.ref == 'refs/heads/dev' && 'dev' || github.ref == 'refs/heads/qa' && 'qa' || 'prod' }}"
@@ -36,11 +36,15 @@ jobs:
       - name: Build Docker Image
         run: |
           IMAGE_TAG=v-$(git rev-parse --short HEAD)
-          IMAGE_URI=667269959204.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/node-app:$IMAGE_TAG
+          IMAGE_URI=667269959204.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/node-app
 
-          docker build -t $IMAGE_URI .
-          echo "IMAGE_URI=$IMAGE_URI"
+          # Build with commit ID tag
+          docker build -t $IMAGE_URI:$IMAGE_TAG -t $IMAGE_URI:latest .
+
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
       - name: Push Docker Image to ECR
         run: |
-          docker push $IMAGE_URI
+          docker push $IMAGE_URI:$IMAGE_TAG
+          docker push $IMAGE_URI:latest
