@@ -12,11 +12,16 @@ jobs:
   build-and-push:
     name: Build & Push to AWS ECR
     runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/dev' && 'dev' || github.ref == 'refs/heads/qa' && 'qa' || 'prod' }}  # 🔥 Dynamic environment selection
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-      
+        
+      - name: Debug Selected Environment
+        run: |
+          echo "Selected environment: ${{ github.ref == 'refs/heads/dev' && 'dev' || github.ref == 'refs/heads/qa' && 'qa' || 'prod' }}"
+
       - name: Configure AWS Credntails
         uses: aws-actions/configure-aws-credentials@v3
         with:
