@@ -19,6 +19,9 @@ RUN npm run build
 #Runner Stage
 FROM node:22-slim
 
+# Add curl 
+RUN apk add --no-cache curl
+
 # Create a non-root user nodeappuser & group
 RUN addgroup --system nodeappgroup 
 # Create a system user and add it to the group
